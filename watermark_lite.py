@@ -50,20 +50,29 @@ class WatermarkApp:
         main_frame = ttk.Frame(self.root)
         main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
-        # 左侧控制面板
+        # 左侧文件操作面板
         left_panel = ttk.Frame(main_frame, width=280)
         left_panel.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 10))
         left_panel.pack_propagate(False)
         
-        # 右侧预览面板
+        # 右侧面板（预览+设置）
         right_panel = ttk.Frame(main_frame)
         right_panel.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
         
+        # 右侧上部：预览区域
+        preview_panel = ttk.Frame(right_panel)
+        preview_panel.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
+        
+        # 右侧下部：水印设置区域
+        settings_panel = ttk.Frame(right_panel)
+        settings_panel.pack(fill=tk.X)
+        
         self.create_left_panel(left_panel)
-        self.create_right_panel(right_panel)
+        self.create_preview_panel(preview_panel)
+        self.create_settings_panel(settings_panel)
         
     def create_left_panel(self, parent):
-        """创建左侧面板"""
+        """创建左侧文件操作面板"""
         # 文件操作
         file_frame = ttk.LabelFrame(parent, text="文件操作", padding=10)
         file_frame.pack(fill=tk.X, pady=(0, 10))
@@ -85,61 +94,8 @@ class WatermarkApp:
         
         self.file_listbox.bind('<<ListboxSelect>>', self.on_image_select)
         
-        # 水印设置
-        settings_frame = ttk.LabelFrame(parent, text="水印设置", padding=10)
-        settings_frame.pack(fill=tk.X, pady=(0, 10))
-        
-        # 水印文本
-        ttk.Label(settings_frame, text="水印文本:").pack(anchor=tk.W)
-        self.text_var = tk.StringVar(value=self.watermark_settings['text'])
-        text_entry = ttk.Entry(settings_frame, textvariable=self.text_var)
-        text_entry.pack(fill=tk.X, pady=(0, 10))
-        text_entry.bind('<KeyRelease>', self.on_setting_change)
-        
-        # 字体大小
-        size_frame = ttk.Frame(settings_frame)
-        size_frame.pack(fill=tk.X, pady=(0, 10))
-        ttk.Label(size_frame, text="字体大小:").pack(side=tk.LEFT)
-        self.font_size_var = tk.IntVar(value=self.watermark_settings['font_size'])
-        size_spin = ttk.Spinbox(size_frame, from_=12, to=100, width=8, textvariable=self.font_size_var)
-        size_spin.pack(side=tk.RIGHT)
-        size_spin.bind('<KeyRelease>', self.on_setting_change)
-        
-        # 颜色
-        color_frame = ttk.Frame(settings_frame)
-        color_frame.pack(fill=tk.X, pady=(0, 10))
-        ttk.Label(color_frame, text="颜色:").pack(side=tk.LEFT)
-        self.color_button = tk.Button(color_frame, text="选择", bg=self.watermark_settings['color'], 
-                                     command=self.choose_color, width=8)
-        self.color_button.pack(side=tk.RIGHT)
-        
-        # 透明度
-        ttk.Label(settings_frame, text="透明度:").pack(anchor=tk.W)
-        self.opacity_var = tk.IntVar(value=self.watermark_settings['opacity'])
-        opacity_scale = ttk.Scale(settings_frame, from_=50, to=255, orient=tk.HORIZONTAL, 
-                                 variable=self.opacity_var, command=self.on_setting_change)
-        opacity_scale.pack(fill=tk.X, pady=(0, 10))
-        
-        # 位置
-        ttk.Label(settings_frame, text="位置:").pack(anchor=tk.W)
-        self.position_var = tk.StringVar(value=self.watermark_settings['position'])
-        positions = [
-            ('左上', 'top-left'), ('右上', 'top-right'),
-            ('左下', 'bottom-left'), ('右下', 'bottom-right'),
-            ('居中', 'center')
-        ]
-        
-        for text, value in positions:
-            ttk.Radiobutton(settings_frame, text=text, variable=self.position_var, 
-                           value=value, command=self.on_setting_change).pack(anchor=tk.W)
-        
-        # 阴影
-        self.shadow_var = tk.BooleanVar(value=self.watermark_settings['shadow'])
-        ttk.Checkbutton(settings_frame, text="添加阴影", variable=self.shadow_var, 
-                       command=self.on_setting_change).pack(anchor=tk.W, pady=(10, 0))
-        
         # 模板管理
-        template_frame = ttk.LabelFrame(parent, text="模板", padding=10)
+        template_frame = ttk.LabelFrame(parent, text="模板管理", padding=10)
         template_frame.pack(fill=tk.X, pady=(0, 10))
         
         template_btn_frame = ttk.Frame(template_frame)
@@ -147,8 +103,8 @@ class WatermarkApp:
         ttk.Button(template_btn_frame, text="保存模板", command=self.save_template).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 2))
         ttk.Button(template_btn_frame, text="加载模板", command=self.load_template).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(2, 0))
         
-        # 导出
-        export_frame = ttk.LabelFrame(parent, text="导出", padding=10)
+        # 导出设置
+        export_frame = ttk.LabelFrame(parent, text="导出设置", padding=10)
         export_frame.pack(fill=tk.X)
         
         # 输出格式
@@ -160,8 +116,8 @@ class WatermarkApp:
         
         ttk.Button(export_frame, text="选择输出目录并导出", command=self.export_images).pack(fill=tk.X, pady=5)
         
-    def create_right_panel(self, parent):
-        """创建右侧预览面板"""
+    def create_preview_panel(self, parent):
+        """创建预览面板"""
         preview_frame = ttk.LabelFrame(parent, text="预览", padding=10)
         preview_frame.pack(fill=tk.BOTH, expand=True)
         
@@ -170,7 +126,91 @@ class WatermarkApp:
         
         # 状态栏
         self.status_var = tk.StringVar(value="请导入图片文件")
-        ttk.Label(parent, textvariable=self.status_var).pack(pady=(10, 0))
+        ttk.Label(preview_frame, textvariable=self.status_var).pack(pady=(10, 0))
+    
+    def create_settings_panel(self, parent):
+        """创建水印设置面板"""
+        # 创建一个可滚动的框架来容纳所有设置
+        canvas = tk.Canvas(parent, height=200)
+        scrollbar = ttk.Scrollbar(parent, orient="vertical", command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas)
+        
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+        
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        # 水印设置内容
+        settings_frame = ttk.LabelFrame(scrollable_frame, text="水印设置", padding=10)
+        settings_frame.pack(fill=tk.X, padx=5, pady=5)
+        
+        # 创建三列布局
+        col1 = ttk.Frame(settings_frame)
+        col1.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
+        
+        col2 = ttk.Frame(settings_frame)
+        col2.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
+        
+        col3 = ttk.Frame(settings_frame)
+        col3.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        
+        # 第一列：文本和字体
+        ttk.Label(col1, text="水印文本:").pack(anchor=tk.W)
+        self.text_var = tk.StringVar(value=self.watermark_settings['text'])
+        text_entry = ttk.Entry(col1, textvariable=self.text_var)
+        text_entry.pack(fill=tk.X, pady=(0, 10))
+        text_entry.bind('<KeyRelease>', self.on_setting_change)
+        
+        # 字体大小
+        size_frame = ttk.Frame(col1)
+        size_frame.pack(fill=tk.X, pady=(0, 10))
+        ttk.Label(size_frame, text="字体大小:").pack(anchor=tk.W)
+        self.font_size_var = tk.IntVar(value=self.watermark_settings['font_size'])
+        size_spin = ttk.Spinbox(size_frame, from_=12, to=100, width=8, textvariable=self.font_size_var)
+        size_spin.pack(fill=tk.X, pady=2)
+        size_spin.bind('<KeyRelease>', self.on_setting_change)
+        
+        # 第二列：颜色和透明度
+        color_frame = ttk.Frame(col2)
+        color_frame.pack(fill=tk.X, pady=(0, 10))
+        ttk.Label(color_frame, text="颜色:").pack(anchor=tk.W)
+        self.color_button = tk.Button(color_frame, text="选择颜色", bg=self.watermark_settings['color'], 
+                                     command=self.choose_color)
+        self.color_button.pack(fill=tk.X, pady=2)
+        
+        # 透明度
+        opacity_frame = ttk.Frame(col2)
+        opacity_frame.pack(fill=tk.X, pady=(0, 10))
+        ttk.Label(opacity_frame, text="透明度:").pack(anchor=tk.W)
+        self.opacity_var = tk.IntVar(value=self.watermark_settings['opacity'])
+        opacity_scale = ttk.Scale(opacity_frame, from_=50, to=255, orient=tk.HORIZONTAL, 
+                                 variable=self.opacity_var, command=self.on_setting_change)
+        opacity_scale.pack(fill=tk.X, pady=2)
+        
+        # 第三列：位置和选项
+        ttk.Label(col3, text="位置:").pack(anchor=tk.W)
+        self.position_var = tk.StringVar(value=self.watermark_settings['position'])
+        positions = [
+            ('左上', 'top-left'), ('右上', 'top-right'),
+            ('左下', 'bottom-left'), ('右下', 'bottom-right'),
+            ('居中', 'center')
+        ]
+        
+        for text, value in positions:
+            ttk.Radiobutton(col3, text=text, variable=self.position_var, 
+                           value=value, command=self.on_setting_change).pack(anchor=tk.W)
+        
+        # 阴影选项
+        self.shadow_var = tk.BooleanVar(value=self.watermark_settings['shadow'])
+        ttk.Checkbutton(col3, text="添加阴影", variable=self.shadow_var, 
+                       command=self.on_setting_change).pack(anchor=tk.W, pady=(10, 0))
+        
+        # 打包滚动组件
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
         
     def import_images(self):
         """导入图片"""
