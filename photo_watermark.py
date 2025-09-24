@@ -176,6 +176,9 @@ class PhotoWatermark:
             pattern = str(input_path / f"*{ext.upper()}")
             image_files.extend(glob.glob(pattern, recursive=False))
         
+        # 去除重复文件（Windows系统不区分大小写可能导致重复）
+        image_files = list(set(image_files))
+        
         if not image_files:
             print(f"在目录 {input_dir} 中没有找到支持的图片文件")
             return
