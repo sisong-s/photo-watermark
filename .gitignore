@@ -1,44 +1,69 @@
-# 构建产物
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
 build/
+develop-eggs/
 dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
 *.spec
 
-# 发布包
-release/
-*.zip
-*.exe
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
 
-# Python 缓存
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-*.so
-
-# 虚拟环境
-venv/
+# Virtual environments
+.env
+.venv
 env/
+venv/
 ENV/
+env.bak/
+venv.bak/
 
-# IDE 文件
+# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
-# 系统文件
+# OS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 
-# 日志文件
+# Application specific
 *.log
-
-# 临时文件
-*.tmp
-*.temp
-
-# 测试输出
-test_output/
-test_fixed/
-imgs_watermark/
+config/
+templates/
+.watermark_lite/

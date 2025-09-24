@@ -1,112 +1,122 @@
 # 图片水印工具
 
-一个基于 Python 的命令行图片水印添加工具，可以从图片的 EXIF 信息中提取拍摄时间并作为水印添加到图片上。
+一个功能完整的图片水印应用程序，支持批量处理和实时预览。
 
 ## 功能特性
 
-✅ **已完成所有要求的功能：**
+### 文件处理
 
-- ✅ 用户输入一个图片文件路径
-- ✅ 读取该路径下所有文件的 EXIF 信息中的拍摄时间信息，选取年月日，作为水印
-- ✅ 用户可以设置字体大小、颜色和在图片上的位置（例如，左上角、居中、右下角）
-- ✅ 程序将文本水印绘制到图片上，并保存为新的图片文件，保存在原目录名\_watermark 的新目录下
+- ✅ 支持单张图片拖拽或文件选择器导入
+- ✅ 支持批量导入多张图片或整个文件夹
+- ✅ 显示已导入图片的列表（文件名）
+- ✅ 支持主流格式：JPEG, PNG, BMP, TIFF
+- ✅ PNG 格式支持透明通道
+- ✅ 用户可选择输出为 JPEG 或 PNG
+- ✅ 可指定输出文件夹，默认禁止导出到原文件夹
+- ✅ 提供多种文件命名规则选项
 
-## 安装依赖
+### 水印类型
 
-```bash
-pip install Pillow
-```
+- ✅ 文本水印：自定义文本内容
+- ✅ 字体大小调节（12-100）
+- ✅ 颜色选择器
+- ✅ 透明度调节（0-255）
 
-或者如果你使用 conda：
+### 水印布局与样式
 
-```bash
-conda install pillow
-```
+- ✅ 实时预览功能
+- ✅ 九宫格预设位置（四角、正中心等）
+- ✅ 手动拖拽调整位置
+- ✅ 点击图片列表切换预览
 
-## 快速开始
+### 配置管理
 
-### 基本使用
+- ✅ 水印模板保存和加载
+- ✅ 程序启动时自动加载上次设置
+- ✅ 模板管理功能
 
-```bash
-# 使用默认设置处理 imgs 目录（输出到 imgs_watermark 目录）
-python photo_watermark.py imgs
+## 安装和运行
 
-# 指定独立的输出目录
-python photo_watermark.py imgs -o output_folder
-```
+### 环境要求
 
-### 自定义参数
+- Python 3.7+
+- tkinter（通常随 Python 安装）
+- Pillow
 
-```bash
-# 设置字体大小和颜色
-python photo_watermark.py imgs --font-size 48 --color red
-
-# 设置水印位置
-python photo_watermark.py imgs --position top-left
-
-# 完整自定义（包括独立输出目录）
-python photo_watermark.py imgs -o watermarked_photos --font-size 32 --color white --position bottom-right --opacity 180
-```
-
-## 参数说明
-
-- `input_dir`: 输入图片目录路径（必需）
-- `-o, --output`: 输出目录路径（可选，默认为输入目录名\_watermark）
-- `--font-size`: 字体大小，默认 36
-- `--color`: 字体颜色，可选：white, black, red, green, blue, yellow, cyan, magenta
-- `--position`: 水印位置，可选：
-  - top-left, top-center, top-right
-  - center-left, center, center-right
-  - bottom-left, bottom-center, bottom-right
-- `--opacity`: 透明度，0-255，默认 128
-
-## 支持的图片格式
-
-- JPEG (.jpg, .jpeg)
-- PNG (.png)
-- TIFF (.tiff)
-- BMP (.bmp)
-
-## 输出
-
-**默认模式**：处理后的图片将保存在 `原目录名_watermark` 目录中（与输入目录同级）。
-
-**自定义输出目录**：使用 `-o` 参数可以指定任意输出目录。
-
-例如：
-
-- `python photo_watermark.py imgs` → 输出到 `imgs_watermark/` 目录
-- `python photo_watermark.py imgs -o my_output` → 输出到 `my_output/` 目录
-
-## 演示
-
-运行演示脚本查看不同参数的效果：
+### 安装依赖
 
 ```bash
-python demo.py
+pip install -r requirements.txt
 ```
 
-## 工作原理
+### 运行程序
 
-1. **EXIF 时间提取**: 程序首先尝试从图片的 EXIF 信息中提取 `DateTime` 或 `DateTimeOriginal` 字段
-2. **备用时间源**: 如果 EXIF 中没有时间信息，程序会使用文件的修改时间
-3. **水印生成**: 将提取的日期格式化为 "YYYY-MM-DD" 格式
-4. **图片处理**: 使用 Pillow 库在指定位置添加带阴影效果的文本水印
-5. **文件保存**: 保存处理后的图片到新的子目录中
-
-## 示例输出
-
-程序运行时会显示处理进度：
-
+```bash
+python run.py
 ```
-找到 3 个图片文件
-处理: photo1.jpg
-  -> 保存到: imgs\imgs_watermark\photo1.jpg
-处理: photo2.jpg
-  -> 保存到: imgs\imgs_watermark\photo2.jpg
-处理: photo3.jpg
-  -> 保存到: imgs\imgs_watermark\photo3.jpg
 
-处理完成! 成功处理 3/3 个文件
-输出目录: imgs\imgs_watermark
+或直接运行：
+
+```bash
+python watermark_app.py
 ```
+
+## 使用说明
+
+### 1. 导入图片
+
+- 点击"导入图片"按钮选择单张或多张图片
+- 点击"导入文件夹"按钮导入整个文件夹的图片
+- 支持的格式：JPEG, PNG, BMP, TIFF
+
+### 2. 设置水印
+
+- 在右侧面板中设置水印文本
+- 调整字体大小、颜色和透明度
+- 选择预设位置或通过拖拽调整位置
+
+### 3. 实时预览
+
+- 中央预览区域会实时显示水印效果
+- 点击左侧图片列表可切换预览不同图片
+
+### 4. 导出图片
+
+- 设置输出格式（PNG/JPEG）
+- 选择文件命名规则
+- 点击"导出当前图片"或"批量导出"
+
+### 5. 模板管理
+
+- 保存当前水印设置为模板
+- 加载已保存的模板
+- 程序会自动保存上次使用的设置
+
+## 界面布局
+
+采用三栏布局设计：
+
+- **左栏**：图片列表、导入功能和输出设置
+- **中栏**：图片预览和水印实时显示
+- **右栏**：水印设置和模板管理
+
+## 技术特性
+
+- 使用 tkinter 构建跨平台 GUI
+- PIL/Pillow 处理图片和水印
+- 支持透明度和颜色混合
+- 实时预览和拖拽交互
+- JSON 格式的模板和设置存储
+
+## 注意事项
+
+1. 导出时默认禁止覆盖原文件夹，需选择不同的输出目录
+2. JPEG 格式不支持透明度，会自动转换为白色背景
+3. 程序会在当前目录创建 `templates` 文件夹存储模板
+4. 设置会自动保存在 `last_settings.json` 文件中
+
+## 故障排除
+
+如果遇到字体相关问题，程序会自动回退到系统默认字体。
+
+如果图片无法加载，请检查文件格式是否受支持。
