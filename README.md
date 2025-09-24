@@ -28,8 +28,11 @@ conda install pillow
 ### 基本使用
 
 ```bash
-# 使用默认设置处理 imgs 目录
+# 使用默认设置处理 imgs 目录（输出到 imgs_watermark 目录）
 python photo_watermark.py imgs
+
+# 指定独立的输出目录
+python photo_watermark.py imgs -o output_folder
 ```
 
 ### 自定义参数
@@ -41,13 +44,14 @@ python photo_watermark.py imgs --font-size 48 --color red
 # 设置水印位置
 python photo_watermark.py imgs --position top-left
 
-# 完整自定义
-python photo_watermark.py imgs --font-size 32 --color white --position bottom-right --opacity 180
+# 完整自定义（包括独立输出目录）
+python photo_watermark.py imgs -o watermarked_photos --font-size 32 --color white --position bottom-right --opacity 180
 ```
 
 ## 参数说明
 
 - `input_dir`: 输入图片目录路径（必需）
+- `-o, --output`: 输出目录路径（可选，默认为输入目录名\_watermark）
 - `--font-size`: 字体大小，默认 36
 - `--color`: 字体颜色，可选：white, black, red, green, blue, yellow, cyan, magenta
 - `--position`: 水印位置，可选：
@@ -65,9 +69,14 @@ python photo_watermark.py imgs --font-size 32 --color white --position bottom-ri
 
 ## 输出
 
-处理后的图片将保存在 `原目录名_watermark` 子目录中。
+**默认模式**：处理后的图片将保存在 `原目录名_watermark` 目录中（与输入目录同级）。
 
-例如：处理 `imgs` 目录，输出将保存在 `imgs/imgs_watermark/` 目录中。
+**自定义输出目录**：使用 `-o` 参数可以指定任意输出目录。
+
+例如：
+
+- `python photo_watermark.py imgs` → 输出到 `imgs_watermark/` 目录
+- `python photo_watermark.py imgs -o my_output` → 输出到 `my_output/` 目录
 
 ## 演示
 

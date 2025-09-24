@@ -38,20 +38,20 @@ def main():
     # 演示不同的使用方式
     demos = [
         {
-            'name': '默认设置 (白色水印，右下角)',
+            'name': '默认设置 (白色水印，右下角，默认输出目录)',
             'cmd': 'python photo_watermark.py imgs'
         },
         {
-            'name': '大字体红色水印，左上角',
-            'cmd': 'python photo_watermark.py imgs --font-size 48 --color red --position top-left'
+            'name': '大字体红色水印，左上角，独立输出目录',
+            'cmd': 'python photo_watermark.py imgs -o demo_output_1 --font-size 48 --color red --position top-left'
         },
         {
-            'name': '中等字体蓝色水印，居中',
-            'cmd': 'python photo_watermark.py imgs --font-size 36 --color blue --position center'
+            'name': '中等字体蓝色水印，居中，独立输出目录',
+            'cmd': 'python photo_watermark.py imgs -o demo_output_2 --font-size 36 --color blue --position center'
         },
         {
-            'name': '小字体黄色水印，底部居中，高透明度',
-            'cmd': 'python photo_watermark.py imgs --font-size 24 --color yellow --position bottom-center --opacity 200'
+            'name': '小字体黄色水印，底部居中，高透明度，独立输出目录',
+            'cmd': 'python photo_watermark.py imgs -o demo_output_3 --font-size 24 --color yellow --position bottom-center --opacity 200'
         }
     ]
     
@@ -67,7 +67,11 @@ def main():
     
     print(f"\n{'='*60}")
     print("所有演示完成！")
-    print("处理后的图片保存在 imgs/imgs_watermark/ 目录中")
+    print("处理后的图片保存在以下目录中：")
+    print("- imgs_watermark/ (默认输出)")
+    print("- demo_output_1/ (红色水印)")
+    print("- demo_output_2/ (蓝色水印)")
+    print("- demo_output_3/ (黄色水印)")
     print("="*60)
 
 if __name__ == '__main__':

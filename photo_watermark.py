@@ -154,7 +154,7 @@ class PhotoWatermark:
             print(f"添加水印失败 {image_path}: {e}")
             return None
     
-    def process_directory(self, input_dir, font_size=36, color='white', position='bottom-right', opacity=128):
+    def process_directory(self, input_dir, output_dir=None, font_size=36, color='white', position='bottom-right', opacity=128):
         """处理目录中的所有图片"""
         input_path = Path(input_dir)
         if not input_path.exists():
@@ -162,8 +162,11 @@ class PhotoWatermark:
             return
         
         # 创建输出目录
-        output_dir = input_path / f"{input_path.name}_watermark"
-        output_dir.mkdir(exist_ok=True)
+        if output_dir is None:
+            output_dir = f"{input_path.name}_watermark"
+        
+        output_path = Path(output_dir)
+        output_path.mkdir(exist_ok=True)
         
         # 查找所有支持的图片文件
         image_files = []
@@ -190,23 +193,24 @@ class PhotoWatermark:
             
             if watermarked_img:
                 # 保存处理后的图片
-                output_path = output_dir / os.path.basename(image_file)
+                output_file_path = output_path / os.path.basename(image_file)
                 try:
-                    watermarked_img.save(output_path, quality=95)
+                    watermarked_img.save(output_file_path, quality=95)
                     processed += 1
-                    print(f"  -> 保存到: {output_path}")
+                    print(f"  -> 保存到: {output_file_path}")
                 except Exception as e:
                     print(f"  -> 保存失败: {e}")
             else:
                 print(f"  -> 处理失败")
         
         print(f"\n处理完成! 成功处理 {processed}/{len(image_files)} 个文件")
-        print(f"输出目录: {output_dir}")
+        print(f"输出目录: {output_path}")
 
 
 def main():
     parser = argparse.ArgumentParser(description='图片水印添加工具')
     parser.add_argument('input_dir', help='输入图片目录路径')
+    parser.add_argument('-o', '--output', dest='output_dir', help='输出目录路径 (可选，默认为输入目录名_watermark)')
     parser.add_argument('--font-size', type=int, default=36, help='字体大小 (默认: 36)')
     parser.add_argument('--color', default='white', 
                        choices=['white', 'black', 'red', 'green', 'blue', 'yellow', 'cyan', 'magenta'],
@@ -234,6 +238,7 @@ def main():
     watermark = PhotoWatermark()
     watermark.process_directory(
         args.input_dir,
+        output_dir=args.output_dir,
         font_size=args.font_size,
         color=args.color,
         position=args.position,
