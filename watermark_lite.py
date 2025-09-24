@@ -111,10 +111,86 @@ class WatermarkApp:
         format_frame = ttk.Frame(export_frame)
         format_frame.pack(fill=tk.X, pady=(0, 5))
         self.output_format_var = tk.StringVar(value="PNG")
-        ttk.Radiobutton(format_frame, text="PNG", variable=self.output_format_var, value="PNG").pack(side=tk.LEFT)
-        ttk.Radiobutton(format_frame, text="JPEG", variable=self.output_format_var, value="JPEG").pack(side=tk.LEFT, padx=(20, 0))
+        ttk.Radiobutton(format_frame, text="PNG", variable=self.output_format_var, 
+                       value="PNG", command=self.on_format_change).pack(side=tk.LEFT)
+        ttk.Radiobutton(format_frame, text="JPEG", variable=self.output_format_var, 
+                       value="JPEG", command=self.on_format_change).pack(side=tk.LEFT, padx=(20, 0))
         
-        ttk.Button(export_frame, text="选择输出目录并导出", command=self.export_images).pack(fill=tk.X, pady=5)
+        # JPEG质量设置
+        self.jpeg_quality_frame = ttk.Frame(export_frame)
+        ttk.Label(self.jpeg_quality_frame, text="JPEG质量:").pack(anchor=tk.W)
+        quality_frame = ttk.Frame(self.jpeg_quality_frame)
+        quality_frame.pack(fill=tk.X, pady=2)
+        self.jpeg_quality = tk.IntVar(value=95)
+        ttk.Scale(quality_frame, from_=10, to=100, orient=tk.HORIZONTAL, 
+                 variable=self.jpeg_quality).pack(side=tk.LEFT, fill=tk.X, expand=True)
+        ttk.Label(quality_frame, textvariable=self.jpeg_quality, width=3).pack(side=tk.RIGHT)
+        
+        # 文件命名规则
+        naming_frame = ttk.LabelFrame(export_frame, text="文件命名", padding=5)
+        naming_frame.pack(fill=tk.X, pady=(5, 0))
+        
+        self.naming_rule = tk.StringVar(value="suffix")
+        ttk.Radiobutton(naming_frame, text="保留原文件名", variable=self.naming_rule, 
+                       value="original").pack(anchor=tk.W)
+        
+        prefix_frame = ttk.Frame(naming_frame)
+        prefix_frame.pack(fill=tk.X, pady=2)
+        ttk.Radiobutton(prefix_frame, text="添加前缀:", variable=self.naming_rule, 
+                       value="prefix").pack(side=tk.LEFT)
+        self.prefix_text = tk.StringVar(value="wm_")
+        ttk.Entry(prefix_frame, textvariable=self.prefix_text, width=8).pack(side=tk.LEFT, padx=(5, 0))
+        
+        suffix_frame = ttk.Frame(naming_frame)
+        suffix_frame.pack(fill=tk.X, pady=2)
+        ttk.Radiobutton(suffix_frame, text="添加后缀:", variable=self.naming_rule, 
+                       value="suffix").pack(side=tk.LEFT)
+        self.suffix_text = tk.StringVar(value="_watermarked")
+        ttk.Entry(suffix_frame, textvariable=self.suffix_text, width=12).pack(side=tk.LEFT, padx=(5, 0))
+        
+        # 图片尺寸调整
+        resize_frame = ttk.LabelFrame(export_frame, text="尺寸调整", padding=5)
+        resize_frame.pack(fill=tk.X, pady=(5, 0))
+        
+        self.resize_enabled = tk.BooleanVar(value=False)
+        ttk.Checkbutton(resize_frame, text="启用尺寸调整", 
+                       variable=self.resize_enabled, command=self.on_resize_toggle).pack(anchor=tk.W)
+        
+        self.resize_options_frame = ttk.Frame(resize_frame)
+        
+        self.resize_mode = tk.StringVar(value="percentage")
+        ttk.Radiobutton(self.resize_options_frame, text="按百分比:", variable=self.resize_mode, 
+                       value="percentage").pack(anchor=tk.W)
+        
+        percentage_frame = ttk.Frame(self.resize_options_frame)
+        percentage_frame.pack(fill=tk.X, pady=2, padx=(20, 0))
+        self.resize_percentage = tk.IntVar(value=100)
+        ttk.Scale(percentage_frame, from_=10, to=200, orient=tk.HORIZONTAL, 
+                 variable=self.resize_percentage).pack(side=tk.LEFT, fill=tk.X, expand=True)
+        ttk.Label(percentage_frame, textvariable=self.resize_percentage).pack(side=tk.RIGHT)
+        ttk.Label(percentage_frame, text="%").pack(side=tk.RIGHT)
+        
+        ttk.Radiobutton(self.resize_options_frame, text="按宽度:", variable=self.resize_mode, 
+                       value="width").pack(anchor=tk.W, pady=(5, 0))
+        width_frame = ttk.Frame(self.resize_options_frame)
+        width_frame.pack(fill=tk.X, pady=2, padx=(20, 0))
+        self.resize_width = tk.IntVar(value=1920)
+        ttk.Entry(width_frame, textvariable=self.resize_width, width=6).pack(side=tk.LEFT)
+        ttk.Label(width_frame, text="px").pack(side=tk.LEFT, padx=(2, 0))
+        
+        ttk.Radiobutton(self.resize_options_frame, text="按高度:", variable=self.resize_mode, 
+                       value="height").pack(anchor=tk.W, pady=(5, 0))
+        height_frame = ttk.Frame(self.resize_options_frame)
+        height_frame.pack(fill=tk.X, pady=2, padx=(20, 0))
+        self.resize_height = tk.IntVar(value=1080)
+        ttk.Entry(height_frame, textvariable=self.resize_height, width=6).pack(side=tk.LEFT)
+        ttk.Label(height_frame, text="px").pack(side=tk.LEFT, padx=(2, 0))
+        
+        ttk.Button(export_frame, text="选择输出目录并导出", command=self.export_images).pack(fill=tk.X, pady=10)
+        
+        # 初始化显示状态
+        self.on_format_change()
+        self.on_resize_toggle()
         
     def create_preview_panel(self, parent):
         """创建预览面板"""
@@ -318,6 +394,66 @@ class WatermarkApp:
             self.watermark_settings['color'] = color[1]
             self.color_button.config(bg=color[1])
             self.update_preview()
+    
+    def on_format_change(self):
+        """格式改变时的处理"""
+        if self.output_format_var.get() == "JPEG":
+            self.jpeg_quality_frame.pack(fill=tk.X, pady=(5, 0))
+        else:
+            self.jpeg_quality_frame.pack_forget()
+    
+    def on_resize_toggle(self):
+        """尺寸调整开关"""
+        if self.resize_enabled.get():
+            self.resize_options_frame.pack(fill=tk.X, pady=(5, 0))
+        else:
+            self.resize_options_frame.pack_forget()
+    
+    def get_output_filename(self, original_path):
+        """根据命名规则生成输出文件名"""
+        filename = os.path.basename(original_path)
+        name, ext = os.path.splitext(filename)
+        
+        # 确定输出扩展名
+        if self.output_format_var.get() == 'JPEG':
+            output_ext = '.jpg'
+        else:
+            output_ext = '.png'
+        
+        # 应用命名规则
+        if self.naming_rule.get() == "original":
+            output_name = name + output_ext
+        elif self.naming_rule.get() == "prefix":
+            prefix = self.prefix_text.get()
+            output_name = prefix + name + output_ext
+        else:  # suffix
+            suffix = self.suffix_text.get()
+            output_name = name + suffix + output_ext
+        
+        return output_name
+    
+    def resize_image(self, image):
+        """根据设置调整图片尺寸"""
+        if not self.resize_enabled.get():
+            return image
+        
+        original_w, original_h = image.size
+        
+        if self.resize_mode.get() == "percentage":
+            scale = self.resize_percentage.get() / 100.0
+            new_w = int(original_w * scale)
+            new_h = int(original_h * scale)
+        elif self.resize_mode.get() == "width":
+            new_w = self.resize_width.get()
+            new_h = int(original_h * (new_w / original_w))
+        else:  # height
+            new_h = self.resize_height.get()
+            new_w = int(original_w * (new_h / original_h))
+        
+        if new_w != original_w or new_h != original_h:
+            return image.resize((new_w, new_h), Image.Resampling.LANCZOS)
+        
+        return image
     
     def update_preview(self):
         """更新预览"""
@@ -533,17 +669,20 @@ class WatermarkApp:
                         # 恢复设置
                         self.watermark_settings = original_settings
                         
-                        # 保存
-                        filename = os.path.basename(img_file)
-                        name, ext = os.path.splitext(filename)
+                        # 调整尺寸
+                        watermarked = self.resize_image(watermarked)
                         
+                        # 生成输出文件名
+                        output_filename = self.get_output_filename(img_file)
+                        output_path = os.path.join(output_dir, output_filename)
+                        
+                        # 保存文件
                         if self.output_format_var.get() == 'JPEG':
-                            output_path = os.path.join(output_dir, f"{name}_watermarked.jpg")
                             if watermarked.mode in ('RGBA', 'LA'):
                                 watermarked = watermarked.convert('RGB')
-                            watermarked.save(output_path, 'JPEG', quality=95)
+                            quality = self.jpeg_quality.get()
+                            watermarked.save(output_path, 'JPEG', quality=quality)
                         else:
-                            output_path = os.path.join(output_dir, f"{name}_watermarked.png")
                             watermarked.save(output_path, 'PNG')
                         
                         success += 1
