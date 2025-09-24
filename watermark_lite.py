@@ -32,6 +32,20 @@ class WatermarkApp:
         self.current_image_index = 0
         self.original_image = None
         self.preview_image = None
+        self.output_directory = None
+        
+        # 初始化变量
+        self.output_format_var = tk.StringVar(value="PNG")
+        self.jpeg_quality = tk.IntVar(value=95)
+        self.naming_rule = tk.StringVar(value="suffix")
+        self.prefix_text = tk.StringVar(value="wm_")
+        self.suffix_text = tk.StringVar(value="_watermarked")
+        self.resize_enabled = tk.BooleanVar(value=False)
+        self.resize_mode = tk.StringVar(value="percentage")
+        self.resize_percentage = tk.IntVar(value=100)
+        self.resize_width = tk.IntVar(value=1920)
+        self.resize_height = tk.IntVar(value=1080)
+        
         self.watermark_settings = {
             'text': '2024-01-01',
             'font_size': 36,
@@ -51,25 +65,31 @@ class WatermarkApp:
         main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
         # 左侧文件操作面板
-        left_panel = ttk.Frame(main_frame, width=280)
+        left_panel = ttk.Frame(main_frame, width=250)
         left_panel.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 10))
         left_panel.pack_propagate(False)
         
-        # 右侧面板（预览+设置）
-        right_panel = ttk.Frame(main_frame)
-        right_panel.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+        # 中间面板（预览+设置）
+        center_panel = ttk.Frame(main_frame)
+        center_panel.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
         
-        # 右侧上部：预览区域
-        preview_panel = ttk.Frame(right_panel)
+        # 右侧导出设置面板
+        right_panel = ttk.Frame(main_frame, width=280)
+        right_panel.pack(side=tk.RIGHT, fill=tk.Y)
+        right_panel.pack_propagate(False)
+        
+        # 中间上部：预览区域
+        preview_panel = ttk.Frame(center_panel)
         preview_panel.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
         
-        # 右侧下部：水印设置区域
-        settings_panel = ttk.Frame(right_panel)
+        # 中间下部：水印设置区域
+        settings_panel = ttk.Frame(center_panel)
         settings_panel.pack(fill=tk.X)
         
         self.create_left_panel(left_panel)
         self.create_preview_panel(preview_panel)
         self.create_settings_panel(settings_panel)
+        self.create_export_panel(right_panel)
         
     def create_left_panel(self, parent):
         """创建左侧文件操作面板"""
@@ -102,95 +122,6 @@ class WatermarkApp:
         template_btn_frame.pack(fill=tk.X)
         ttk.Button(template_btn_frame, text="保存模板", command=self.save_template).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 2))
         ttk.Button(template_btn_frame, text="加载模板", command=self.load_template).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(2, 0))
-        
-        # 导出设置
-        export_frame = ttk.LabelFrame(parent, text="导出设置", padding=10)
-        export_frame.pack(fill=tk.X)
-        
-        # 输出格式
-        format_frame = ttk.Frame(export_frame)
-        format_frame.pack(fill=tk.X, pady=(0, 5))
-        self.output_format_var = tk.StringVar(value="PNG")
-        ttk.Radiobutton(format_frame, text="PNG", variable=self.output_format_var, 
-                       value="PNG", command=self.on_format_change).pack(side=tk.LEFT)
-        ttk.Radiobutton(format_frame, text="JPEG", variable=self.output_format_var, 
-                       value="JPEG", command=self.on_format_change).pack(side=tk.LEFT, padx=(20, 0))
-        
-        # JPEG质量设置
-        self.jpeg_quality_frame = ttk.Frame(export_frame)
-        ttk.Label(self.jpeg_quality_frame, text="JPEG质量:").pack(anchor=tk.W)
-        quality_frame = ttk.Frame(self.jpeg_quality_frame)
-        quality_frame.pack(fill=tk.X, pady=2)
-        self.jpeg_quality = tk.IntVar(value=95)
-        ttk.Scale(quality_frame, from_=10, to=100, orient=tk.HORIZONTAL, 
-                 variable=self.jpeg_quality).pack(side=tk.LEFT, fill=tk.X, expand=True)
-        ttk.Label(quality_frame, textvariable=self.jpeg_quality, width=3).pack(side=tk.RIGHT)
-        
-        # 文件命名规则
-        naming_frame = ttk.LabelFrame(export_frame, text="文件命名", padding=5)
-        naming_frame.pack(fill=tk.X, pady=(5, 0))
-        
-        self.naming_rule = tk.StringVar(value="suffix")
-        ttk.Radiobutton(naming_frame, text="保留原文件名", variable=self.naming_rule, 
-                       value="original").pack(anchor=tk.W)
-        
-        prefix_frame = ttk.Frame(naming_frame)
-        prefix_frame.pack(fill=tk.X, pady=2)
-        ttk.Radiobutton(prefix_frame, text="添加前缀:", variable=self.naming_rule, 
-                       value="prefix").pack(side=tk.LEFT)
-        self.prefix_text = tk.StringVar(value="wm_")
-        ttk.Entry(prefix_frame, textvariable=self.prefix_text, width=8).pack(side=tk.LEFT, padx=(5, 0))
-        
-        suffix_frame = ttk.Frame(naming_frame)
-        suffix_frame.pack(fill=tk.X, pady=2)
-        ttk.Radiobutton(suffix_frame, text="添加后缀:", variable=self.naming_rule, 
-                       value="suffix").pack(side=tk.LEFT)
-        self.suffix_text = tk.StringVar(value="_watermarked")
-        ttk.Entry(suffix_frame, textvariable=self.suffix_text, width=12).pack(side=tk.LEFT, padx=(5, 0))
-        
-        # 图片尺寸调整
-        resize_frame = ttk.LabelFrame(export_frame, text="尺寸调整", padding=5)
-        resize_frame.pack(fill=tk.X, pady=(5, 0))
-        
-        self.resize_enabled = tk.BooleanVar(value=False)
-        ttk.Checkbutton(resize_frame, text="启用尺寸调整", 
-                       variable=self.resize_enabled, command=self.on_resize_toggle).pack(anchor=tk.W)
-        
-        self.resize_options_frame = ttk.Frame(resize_frame)
-        
-        self.resize_mode = tk.StringVar(value="percentage")
-        ttk.Radiobutton(self.resize_options_frame, text="按百分比:", variable=self.resize_mode, 
-                       value="percentage").pack(anchor=tk.W)
-        
-        percentage_frame = ttk.Frame(self.resize_options_frame)
-        percentage_frame.pack(fill=tk.X, pady=2, padx=(20, 0))
-        self.resize_percentage = tk.IntVar(value=100)
-        ttk.Scale(percentage_frame, from_=10, to=200, orient=tk.HORIZONTAL, 
-                 variable=self.resize_percentage).pack(side=tk.LEFT, fill=tk.X, expand=True)
-        ttk.Label(percentage_frame, textvariable=self.resize_percentage).pack(side=tk.RIGHT)
-        ttk.Label(percentage_frame, text="%").pack(side=tk.RIGHT)
-        
-        ttk.Radiobutton(self.resize_options_frame, text="按宽度:", variable=self.resize_mode, 
-                       value="width").pack(anchor=tk.W, pady=(5, 0))
-        width_frame = ttk.Frame(self.resize_options_frame)
-        width_frame.pack(fill=tk.X, pady=2, padx=(20, 0))
-        self.resize_width = tk.IntVar(value=1920)
-        ttk.Entry(width_frame, textvariable=self.resize_width, width=6).pack(side=tk.LEFT)
-        ttk.Label(width_frame, text="px").pack(side=tk.LEFT, padx=(2, 0))
-        
-        ttk.Radiobutton(self.resize_options_frame, text="按高度:", variable=self.resize_mode, 
-                       value="height").pack(anchor=tk.W, pady=(5, 0))
-        height_frame = ttk.Frame(self.resize_options_frame)
-        height_frame.pack(fill=tk.X, pady=2, padx=(20, 0))
-        self.resize_height = tk.IntVar(value=1080)
-        ttk.Entry(height_frame, textvariable=self.resize_height, width=6).pack(side=tk.LEFT)
-        ttk.Label(height_frame, text="px").pack(side=tk.LEFT, padx=(2, 0))
-        
-        ttk.Button(export_frame, text="选择输出目录并导出", command=self.export_images).pack(fill=tk.X, pady=10)
-        
-        # 初始化显示状态
-        self.on_format_change()
-        self.on_resize_toggle()
         
     def create_preview_panel(self, parent):
         """创建预览面板"""
@@ -287,6 +218,110 @@ class WatermarkApp:
         # 打包滚动组件
         canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
+    
+    def create_export_panel(self, parent):
+        """创建导出设置面板"""
+        # 导出设置
+        export_frame = ttk.LabelFrame(parent, text="导出设置", padding=10)
+        export_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # 输出格式
+        format_frame = ttk.LabelFrame(export_frame, text="输出格式", padding=5)
+        format_frame.pack(fill=tk.X, pady=(0, 10))
+        
+        format_buttons = ttk.Frame(format_frame)
+        format_buttons.pack(fill=tk.X)
+        ttk.Radiobutton(format_buttons, text="PNG", variable=self.output_format_var, 
+                       value="PNG", command=self.on_format_change).pack(side=tk.LEFT)
+        ttk.Radiobutton(format_buttons, text="JPEG", variable=self.output_format_var, 
+                       value="JPEG", command=self.on_format_change).pack(side=tk.LEFT, padx=(20, 0))
+        
+        # JPEG质量设置
+        self.jpeg_quality_frame = ttk.Frame(format_frame)
+        ttk.Label(self.jpeg_quality_frame, text="JPEG质量:").pack(anchor=tk.W, pady=(5, 0))
+        quality_frame = ttk.Frame(self.jpeg_quality_frame)
+        quality_frame.pack(fill=tk.X, pady=2)
+        ttk.Scale(quality_frame, from_=10, to=100, orient=tk.HORIZONTAL, 
+                 variable=self.jpeg_quality).pack(side=tk.LEFT, fill=tk.X, expand=True)
+        ttk.Label(quality_frame, textvariable=self.jpeg_quality, width=3).pack(side=tk.RIGHT)
+        
+        # 文件命名规则
+        naming_frame = ttk.LabelFrame(export_frame, text="文件命名规则", padding=5)
+        naming_frame.pack(fill=tk.X, pady=(0, 10))
+        
+        ttk.Radiobutton(naming_frame, text="保留原文件名", variable=self.naming_rule, 
+                       value="original").pack(anchor=tk.W)
+        
+        prefix_frame = ttk.Frame(naming_frame)
+        prefix_frame.pack(fill=tk.X, pady=2)
+        ttk.Radiobutton(prefix_frame, text="添加前缀:", variable=self.naming_rule, 
+                       value="prefix").pack(side=tk.LEFT)
+        ttk.Entry(prefix_frame, textvariable=self.prefix_text, width=10).pack(side=tk.RIGHT)
+        
+        suffix_frame = ttk.Frame(naming_frame)
+        suffix_frame.pack(fill=tk.X, pady=2)
+        ttk.Radiobutton(suffix_frame, text="添加后缀:", variable=self.naming_rule, 
+                       value="suffix").pack(side=tk.LEFT)
+        ttk.Entry(suffix_frame, textvariable=self.suffix_text, width=12).pack(side=tk.RIGHT)
+        
+        # 图片尺寸调整
+        resize_frame = ttk.LabelFrame(export_frame, text="尺寸调整", padding=5)
+        resize_frame.pack(fill=tk.X, pady=(0, 10))
+        
+        ttk.Checkbutton(resize_frame, text="启用尺寸调整", 
+                       variable=self.resize_enabled, command=self.on_resize_toggle).pack(anchor=tk.W)
+        
+        self.resize_options_frame = ttk.Frame(resize_frame)
+        
+        ttk.Radiobutton(self.resize_options_frame, text="按百分比:", variable=self.resize_mode, 
+                       value="percentage").pack(anchor=tk.W)
+        
+        percentage_frame = ttk.Frame(self.resize_options_frame)
+        percentage_frame.pack(fill=tk.X, pady=2, padx=(20, 0))
+        ttk.Scale(percentage_frame, from_=10, to=200, orient=tk.HORIZONTAL, 
+                 variable=self.resize_percentage).pack(side=tk.LEFT, fill=tk.X, expand=True)
+        ttk.Label(percentage_frame, textvariable=self.resize_percentage).pack(side=tk.RIGHT)
+        ttk.Label(percentage_frame, text="%").pack(side=tk.RIGHT)
+        
+        ttk.Radiobutton(self.resize_options_frame, text="按宽度:", variable=self.resize_mode, 
+                       value="width").pack(anchor=tk.W, pady=(5, 0))
+        width_frame = ttk.Frame(self.resize_options_frame)
+        width_frame.pack(fill=tk.X, pady=2, padx=(20, 0))
+        ttk.Entry(width_frame, textvariable=self.resize_width, width=8).pack(side=tk.LEFT)
+        ttk.Label(width_frame, text="px").pack(side=tk.LEFT, padx=(2, 0))
+        
+        ttk.Radiobutton(self.resize_options_frame, text="按高度:", variable=self.resize_mode, 
+                       value="height").pack(anchor=tk.W, pady=(5, 0))
+        height_frame = ttk.Frame(self.resize_options_frame)
+        height_frame.pack(fill=tk.X, pady=2, padx=(20, 0))
+        ttk.Entry(height_frame, textvariable=self.resize_height, width=8).pack(side=tk.LEFT)
+        ttk.Label(height_frame, text="px").pack(side=tk.LEFT, padx=(2, 0))
+        
+        # 导出按钮
+        export_button_frame = ttk.Frame(export_frame)
+        export_button_frame.pack(fill=tk.X, pady=(10, 0))
+        
+        ttk.Button(export_button_frame, text="选择输出目录", 
+                  command=self.choose_output_directory).pack(fill=tk.X, pady=(0, 5))
+        
+        self.output_dir_label = ttk.Label(export_button_frame, text="输出目录: 未选择", 
+                                         wraplength=250, foreground="gray")
+        self.output_dir_label.pack(anchor=tk.W, pady=(0, 5))
+        
+        ttk.Button(export_button_frame, text="导出所有图片", 
+                  command=self.export_images).pack(fill=tk.X)
+        
+        # 初始化显示状态
+        self.on_format_change()
+        self.on_resize_toggle()
+        
+    def choose_output_directory(self):
+        """选择输出目录"""
+        directory = filedialog.askdirectory(title="选择输出目录")
+        if directory:
+            self.output_directory = directory
+            self.output_dir_label.config(text=f"输出目录: {os.path.basename(directory)}", 
+                                       foreground="black")
         
     def import_images(self):
         """导入图片"""
@@ -635,9 +670,16 @@ class WatermarkApp:
             messagebox.showwarning("警告", "请先导入图片")
             return
         
-        output_dir = filedialog.askdirectory(title="选择输出目录")
-        if not output_dir:
-            return
+        # 使用已选择的输出目录，如果没有则提示选择
+        if not self.output_directory:
+            output_dir = filedialog.askdirectory(title="选择输出目录")
+            if not output_dir:
+                return
+            self.output_directory = output_dir
+            self.output_dir_label.config(text=f"输出目录: {os.path.basename(output_dir)}", 
+                                       foreground="black")
+        
+        output_dir = self.output_directory
         
         # 进度窗口
         progress = tk.Toplevel(self.root)
